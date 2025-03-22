@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -16,7 +17,16 @@ type PatientsTable struct {
 }
 
 // **データベースのセットアップ**
+
 func SetupDatabase() *PatientsTable {
+	dsn := os.Getenv("DSN")
+	dsnDir := filepath.Dir(dsn)
+
+	// ディレクトリがなければ作成
+	if err := os.MkdirAll(dsnDir, os.ModePerm); err != nil {
+		log.Fatalf("ディレクトリの作成に失敗: %v", err)
+	}
+
 	db, err := sql.Open("sqlite3", os.Getenv("DSN"))
 	if err != nil {
 		log.Fatalf("データベースのオープンに失敗: %v", err)

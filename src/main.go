@@ -6,11 +6,13 @@ import (
 	"crypto/sha256"
 	"encoding/csv"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/rivo/tview"
@@ -32,7 +34,6 @@ var (
 
 	// 各種UI
 	passwordForm *tview.Form
-	saveDirList  *tview.List
 	csvList      *tview.List
 	mwfDirList   *tview.List
 	logView      *tview.TextView
@@ -52,6 +53,8 @@ func main() {
 	setupLogger()
 
 	for { // ユーザが"終了"を選択するまでループ
+		saveDir = filepath.Join(os.Getenv("ANNONYMIZED_DATA_DIR"), time.Now().Format("2006-01-02-150405"))
+
 		initializeTUI()
 		wg = sync.WaitGroup{}
 		if err := app.Run(); err != nil {
@@ -63,8 +66,17 @@ func main() {
 
 // ** ログ設定 **
 func setupLogger() {
+	// 保存フォルダが存在しない場合は作成
+	logFileDir := os.Getenv("LOG_FILE_DIR")
+	if _, err := os.Stat(logFileDir); os.IsNotExist(err) {
+		err := os.MkdirAll(logFileDir, 0755) // フォルダ作成
+		if err != nil {
+			log.Fatalf("保存フォルダの作成に失敗: %v", err)
+		}
+	}
+
 	logFile, err := os.OpenFile(
-		os.Getenv("LOG_FILE_DIR")+os.Getenv("LOG_FILE_NAME"),
+		filepath.Join(logFileDir, os.Getenv("LOG_FILE_NAME")),
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
 		0666,
 	)
@@ -82,7 +94,7 @@ func initializeTUI() {
 
 	// 各画面を作成
 	passwordForm = createPasswordForm()
-	saveDirList = createSaveDirList()
+	// saveDirList = createSaveDirList()
 	csvList = createCSVList()
 	mwfDirList = createMWFDirectoryList()
 	logView = createLogView()
@@ -90,7 +102,7 @@ func initializeTUI() {
 	// **最初はパスワード画面を表示**
 	layout = tview.NewFlex().
 		AddItem(passwordForm, 0, 1, true).
-		AddItem(saveDirList, 0, 1, false).
+		// AddItem(saveDirList, 0, 1, false).
 		AddItem(csvList, 0, 1, false).
 		AddItem(mwfDirList, 0, 1, false)
 
@@ -104,7 +116,8 @@ func createPasswordForm() *tview.Form {
 			password = text
 		}).
 		AddButton("次へ", func() {
-			updateSaveDirList()
+			// updateSaveDirList()
+			updateCSVList()
 		}).
 		AddButton("終了", func() {
 			app.Stop()
@@ -115,24 +128,17 @@ func createPasswordForm() *tview.Form {
 	return form
 }
 
-// ** 保存先ディレクトリ選択 **
-func createSaveDirList() *tview.List {
-	list := tview.NewList().ShowSecondaryText(false)
-	list.SetBorder(true).SetTitle("2. 保存先フォルダを選択")
-	return list
-}
-
 // ** CSV選択リスト **
 func createCSVList() *tview.List {
 	list := tview.NewList().ShowSecondaryText(false)
-	list.SetBorder(true).SetTitle("3. CSVファイル選択")
+	list.SetBorder(true).SetTitle("2. ファイル一覧表(csv)を選択")
 	return list
 }
 
 // ** MWFフォルダ選択リスト **
 func createMWFDirectoryList() *tview.List {
 	list := tview.NewList().ShowSecondaryText(false)
-	list.SetBorder(true).SetTitle("4. MWFディレクトリ選択")
+	list.SetBorder(true).SetTitle("3. ECGデータのあるフォルダを選択")
 	return list
 }
 
@@ -141,54 +147,6 @@ func createLogView() *tview.TextView {
 	logView := tview.NewTextView().SetDynamicColors(true)
 	logView.SetBorder(true).SetTitle("ログ")
 	return logView
-}
-
-// **保存フォルダリストを更新**
-func updateSaveDirList() {
-	go func() { // 非同期で処理
-		saveDirList.Clear()
-		app.QueueUpdateDraw(func() {
-			saveDirList.SetTitle("保存先フォルダ: " + filepath.Base(currentDir))
-		})
-
-		entries, err := os.ReadDir(currentDir)
-		if err != nil {
-			app.QueueUpdateDraw(func() {
-				logView.SetText("ディレクトリ読み取り失敗: " + err.Error())
-			})
-			return
-		}
-
-		for _, entry := range entries {
-			if entry.IsDir() {
-				dirPath := filepath.Join(currentDir, entry.Name())
-				app.QueueUpdateDraw(func() {
-					saveDirList.AddItem(entry.Name(), "", 0, func() {
-						currentDir = dirPath
-						updateSaveDirList()
-					})
-				})
-			}
-		}
-
-		// 親ディレクトリ (..) を追加
-		parentDir := filepath.Dir(currentDir)
-		saveDirList.AddItem("[DIR] 前のフォルダに戻る", "", 0, func() {
-			currentDir = parentDir
-			updateSaveDirList()
-		})
-
-		// 保存先フォルダを選択
-		saveDirList.AddItem("[✔] このフォルダを選択", "", 0, func() {
-			saveDir = currentDir
-			updateCSVList()
-		})
-
-		// **UIを更新**
-		app.QueueUpdateDraw(func() {
-			app.SetFocus(saveDirList)
-		})
-	}()
 }
 
 // ** [修正] CSV選択リストを更新 **
@@ -205,7 +163,7 @@ func updateCSVList() {
 		for _, entry := range entries {
 			filePath := filepath.Join(currentDir, entry.Name())
 
-			if entry.IsDir() {
+			if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
 				csvList.AddItem("[DIR] "+entry.Name(), "", 0, func() {
 					currentDir = filePath
 					updateCSVList()
@@ -249,7 +207,7 @@ func updateMWFDirectoryList() {
 		}
 
 		for _, entry := range entries {
-			if entry.IsDir() {
+			if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
 				dirPath := filepath.Join(currentDir, entry.Name())
 				mwfDirList.AddItem("[DIR] "+entry.Name(), "", 0, func() {
 					currentDir = dirPath
@@ -317,6 +275,14 @@ func sha256Hash(patientID, password string) string {
 
 // **匿名化したデータをCSVに保存**
 func saveAnonymizedCSV(records [][]string) {
+	// 保存フォルダが存在しない場合は作成
+	if _, err := os.Stat(saveDir); os.IsNotExist(err) {
+		err := os.MkdirAll(saveDir, 0755) // フォルダ作成
+		if err != nil {
+			log.Fatalf("保存フォルダの作成に失敗: %v", err)
+		}
+	}
+
 	outputPath := filepath.Join(saveDir, filepath.Base(strings.TrimSuffix(selectedCSV, filepath.Ext(selectedCSV))+"_anonymized.csv"))
 	file, err := os.Create(outputPath)
 	if err != nil {
@@ -339,7 +305,7 @@ func processFiles() {
 
 	for _, filename := range outputFiles {
 		// csvファイル以外はスキップ
-		if !strings.HasSuffix(strings.ToLower(filename), ".csv") {
+		if !strings.HasSuffix(strings.ToLower(filename), ".mwf") {
 			continue
 		}
 
@@ -356,7 +322,29 @@ func processFiles() {
 	}
 
 	wg.Wait()
-	app.Stop()
+	// app.Stop()
+	showCompletionMenu()
+}
+
+// ** 処理完了メニュー **
+func showCompletionMenu() {
+	app = tview.NewApplication()
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("匿名化したファイルは %s に保存されました。\n続けますか？", saveDir)).
+		AddButtons([]string{"続ける", "終了"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "終了" {
+				app.Stop()
+				os.Exit(0)
+			} else {
+				app.Stop()
+			}
+		})
+
+	if err := app.SetRoot(modal, true).Run(); err != nil {
+		log.Fatalf("アプリケーションエラー: %v", err)
+	}
 }
 
 // ** ファイル検索 **
@@ -386,6 +374,14 @@ func processFile(filePath string) {
 	if err != nil {
 		log.Printf("処理失敗: %v", err)
 		return
+	}
+
+	// 保存フォルダが存在しない場合は作成
+	if _, err := os.Stat(saveDir); os.IsNotExist(err) {
+		err := os.MkdirAll(saveDir, 0755) // フォルダ作成
+		if err != nil {
+			log.Fatalf("保存フォルダの作成に失敗: %v", err)
+		}
 	}
 
 	outputPath := filepath.Join(saveDir, filepath.Base(filePath)) // 保存先を指定
