@@ -51,7 +51,6 @@ func SetupDatabase() *PatientsTable {
 		log.Fatalf("テーブル作成失敗: %v", err)
 	}
 
-	fmt.Println("データベースのセットアップ完了")
 	return &PatientsTable{DB: db}
 }
 
