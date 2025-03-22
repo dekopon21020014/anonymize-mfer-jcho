@@ -2,6 +2,6 @@
 Version=1.0
 Type=Application
 Name=MyScript
-Exec=gnome-terminal -- bash -c "docker run -it --rm -v $(pwd):/mnt -v $(pwd)/tmp/logs:/logs anonymize-mfer-jcho:amd64"
+Exec=gnome-terminal -- bash -c "docker run -it --rm -v ~:/mnt -v ~/Desktop/logs:/logs -v ~/Desktop/anonymized-data:/anonymized-data anonymize-mfer-jcho:amd64"
 Icon=utilities-terminal
 Terminal=false
