@@ -2,9 +2,9 @@
 FROM golang:1.22.1
 
 # 環境変数設定 (言語と端末設定)
-ENV LANG ja_JP.UTF-8
-ENV LC_ALL ja_JP.UTF-8
-ENV TERM xterm-256color
+ENV LANG=ja_JP.UTF-8
+ENV LC_ALL=ja_JP.UTF-8
+ENV TERM=xterm-256color
 
 # 必要なパッケージをインストール (UTF-8サポートのため)
 RUN apt-get update && apt-get install -y locales && \
@@ -15,11 +15,12 @@ RUN apt-get update && apt-get install -y locales && \
 # 作業ディレクトリ作成
 WORKDIR /app
 
-# モジュールのキャッシュを有効化
-COPY go.mod go.sum main.go .env ./
+# ソースをコンテナ内にコピー
+COPY .env.prod .env
+COPY main.go go.mod go.sum ./
 COPY mfer mfer
+COPY table table
 RUN go mod tidy
-
 
 # アプリのビルド
 RUN go build -o anonymize-mfer
