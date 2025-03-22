@@ -1,4 +1,4 @@
-module sample
+module anonymize-mfer-jcho
 
 go 1.22.1
 

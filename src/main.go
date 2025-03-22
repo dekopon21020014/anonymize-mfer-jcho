@@ -1,14 +1,14 @@
 package main
 
 import (
+	"anonymize-mfer-jcho/mfer"
+	"anonymize-mfer-jcho/table"
 	"crypto/sha256"
 	"encoding/csv"
 	"encoding/hex"
 	"log"
 	"os"
 	"path/filepath"
-	"sample/mfer"
-	"sample/table"
 	"strings"
 	"sync"
 
