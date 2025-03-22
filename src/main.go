@@ -328,6 +328,7 @@ func processFiles() {
 
 // ** 処理完了メニュー **
 func showCompletionMenu() {
+	app.Stop()
 	app = tview.NewApplication()
 
 	modal := tview.NewModal().
