@@ -1,8 +1,3 @@
-/sample-data/
-/log/*
-/tmp/*
-/anonymized-data/
-/lib
-/bin
-/include
-pyvenv.cfg
+/tmp
+*.tar
+*.sqlite
