@@ -1,8 +1,8 @@
 package main
 
 import (
-	"anonymize-mfer-jcho/mfer"
-	"anonymize-mfer-jcho/table"
+	"anonymize-mfer-tui/mfer"
+	"anonymize-mfer-tui/table"
 	"crypto/sha256"
 	"encoding/csv"
 	"encoding/hex"

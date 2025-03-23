@@ -1,4 +1,4 @@
-module anonymize-mfer-jcho
+module anonymize-mfer-tui
 
 go 1.22.1
 
