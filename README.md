@@ -2,7 +2,7 @@
 
 ## 概要
 `Anonymize-MFER-JCHO` は、医療データの匿名化を支援するTUI（Text-based User Interface）アプリケーションです。本ツールは、CSVファイルに含まれる患者IDをSHA256でハッシュ化し、MFER（Medical Waveform Encoding Format）データを処理・匿名化します。
-![実行時のスクリーンショット](image.png)
+![実行時のスクリーンショット](doc/image.png)
 
 ## 特徴
 - **TUIによる操作**: `tview` を使用した直感的なインターフェース
