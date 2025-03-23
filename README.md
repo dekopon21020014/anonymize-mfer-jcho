@@ -1,7 +1,7 @@
-# Anonymize-MFER-JCHO
+# Anonymize-MFER-TUI
 
 ## 概要
-`Anonymize-MFER-JCHO` は、医療データの匿名化を支援するTUI（Text-based User Interface）アプリケーションです。本ツールは、CSVファイルに含まれる患者IDをSHA256でハッシュ化し、MFER（Medical Waveform Encoding Format）データを処理・匿名化します。
+`Anonymize-MFER-TUI` は、医療データの匿名化を支援するTUI（Text-based User Interface）アプリケーションです。本ツールは、CSVファイルに含まれる患者IDをSHA256でハッシュ化し、MFER（Medical Waveform Encoding Format）データを処理・匿名化します。
 ![実行時のスクリーンショット](doc/image.png)
 
 ## 特徴
@@ -26,7 +26,7 @@ sh build.prod.sh
 # USBメモリをPCに挿す
 cd /media/user-name/usb-name/setup
 sh install.sh
-cp anonymize-mfer-jcho.desktop ~/Desktop/
+cp anonymize-mfer.desktop ~/Desktop/
 # デスクトップのアイコンを右クリックして"Allow launching"をクリック
 ```
 
